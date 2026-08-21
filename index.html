@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="黃耆 TCM 球員數據、排行榜與投籃表現。">
+    <meta name="theme-color" content="#681d1d">
+    <meta property="og:title" content="黃耆 TCM｜球員數據">
+    <meta property="og:description" content="快速查看黃耆 TCM 球員數據與隊內排行榜。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://jackson45252.github.io/huangqi-tcm-stats/">
+    <title>黃耆 TCM｜球員數據</title>
+    <link rel="stylesheet" href="./css/site.css">
+    <script src="./js/site.js" defer></script>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__inner">
+        <div class="brand-mark" aria-hidden="true">
+          <span>黃</span>
+          <small>TCM</small>
+        </div>
+        <div class="hero__copy">
+          <p class="eyebrow" id="seasonName">球隊數據中心</p>
+          <h1>黃耆 <span>TCM</span></h1>
+          <p class="hero__description">快速掌握球員表現與隊內排行</p>
+        </div>
+        <div class="hero__meta">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span id="updatedAt">讀取資料中</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="leader-section" aria-labelledby="leaderTitle">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">TEAM LEADERS</p>
+            <h2 id="leaderTitle">隊內領先</h2>
+          </div>
+          <p id="leaderNote">依目前平均數據計算</p>
+        </div>
+
+        <div class="leader-grid">
+          <article class="leader-card leader-card--points">
+            <p>場均得分</p>
+            <strong id="pointsValue">—</strong>
+            <span id="pointsName">載入中</span>
+          </article>
+          <article class="leader-card">
+            <p>場均籃板</p>
+            <strong id="reboundsValue">—</strong>
+            <span id="reboundsName">載入中</span>
+          </article>
+          <article class="leader-card">
+            <p>場均助攻</p>
+            <strong id="assistsValue">—</strong>
+            <span id="assistsName">載入中</span>
+          </article>
+          <article class="leader-card">
+            <p>效率值</p>
+            <strong id="efficiencyValue">—</strong>
+            <span id="efficiencyName">載入中</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="roster-section" aria-labelledby="rosterTitle">
+        <div class="section-heading section-heading--roster">
+          <div>
+            <p class="section-kicker">PLAYER STATS</p>
+            <h2 id="rosterTitle">球員數據</h2>
+          </div>
+          <p><strong id="playerCount">0</strong> 名球員</p>
+        </div>
+
+        <div class="toolbar">
+          <label class="search-box">
+            <span class="visually-hidden">搜尋球員</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="m21 21-4.35-4.35m2.35-5.15a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"></path>
+            </svg>
+            <input id="playerSearch" type="search" placeholder="搜尋球員姓名" autocomplete="off">
+          </label>
+
+          <label class="sort-box">
+            <span>排序</span>
+            <select id="sortSelect">
+              <option value="EffAvg">效率值</option>
+              <option value="PAvg">場均得分</option>
+              <option value="TRebAvg">場均籃板</option>
+              <option value="AstAvg">場均助攻</option>
+              <option value="StlAvg">場均抄截</option>
+              <option value="BlkAvg">場均阻攻</option>
+              <option value="GameCount">出賽場次</option>
+              <option value="PlayerName">球員姓名</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="statusMessage" class="status-message" role="status" aria-live="polite">
+          正在取得最新數據…
+        </div>
+
+        <div class="table-panel" id="tablePanel" hidden>
+          <div class="table-scroll">
+            <table>
+              <caption class="visually-hidden">黃耆 TCM 球員平均數據</caption>
+              <thead>
+                <tr>
+                  <th scope="col">球員</th>
+                  <th scope="col">場次</th>
+                  <th scope="col">得分</th>
+                  <th scope="col">籃板</th>
+                  <th scope="col">助攻</th>
+                  <th scope="col">抄截</th>
+                  <th scope="col">阻攻</th>
+                  <th scope="col">失誤</th>
+                  <th scope="col">效率</th>
+                  <th scope="col">兩分球</th>
+                  <th scope="col">三分球</th>
+                  <th scope="col">罰球</th>
+                </tr>
+              </thead>
+              <tbody id="playerTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="playerCards" class="player-cards" hidden></div>
+        <p id="emptyMessage" class="empty-message" hidden>找不到符合條件的球員。</p>
+      </section>
+    </main>
+
+    <footer>
+      <p>資料來源：<a href="https://www.bballhot.com/" target="_blank" rel="noopener noreferrer">南球人</a></p>
+      <p>數據由公開 API 定期同步，實際紀錄以主辦單位公告為準。</p>
+    </footer>
+  </body>
+</html>
