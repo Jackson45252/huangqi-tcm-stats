@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const API_URL = "https://www.bballhot.com/api/Home/PlayerList/45";
-const TEAM_NAME = "黃耆TCM";
+const GROUP_ID = 715;
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectDirectory = path.resolve(scriptDirectory, "..");
 const outputPath = path.join(projectDirectory, "data", "players.json");
@@ -69,21 +69,34 @@ async function updatePlayers() {
   }
 
   const players = allPlayers
-    .filter((player) => player.TeamName === TEAM_NAME)
+    .filter((player) => Number(player.GroupId) === GROUP_ID)
     .map(pickPlayerFields);
 
   if (players.length === 0) {
-    throw new Error(`No players found for ${TEAM_NAME}`);
+    throw new Error(`No players found for group ${GROUP_ID}`);
   }
 
   const firstPlayer = players[0];
+  const teams = [...new Map(
+    players.map((player) => [
+      Number(player.TeamId),
+      {
+        teamId: Number(player.TeamId),
+        teamName: player.TeamName,
+        playerCount: players.filter((item) => Number(item.TeamId) === Number(player.TeamId)).length
+      }
+    ])
+  ).values()].sort((left, right) =>
+    left.teamName.localeCompare(right.teamName, "zh-Hant")
+  );
+
   const payload = {
-    schemaVersion: 1,
-    teamName: TEAM_NAME,
-    teamId: firstPlayer.TeamId,
-    eventName: firstPlayer.EventName,
+    schemaVersion: 2,
+    groupId: GROUP_ID,
     groupName: firstPlayer.GroupName,
+    eventName: firstPlayer.EventName,
     playerCount: players.length,
+    teams,
     updatedAt: new Date().toISOString(),
     source: API_URL,
     players
@@ -91,7 +104,7 @@ async function updatePlayers() {
 
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
-  console.log(`Updated ${players.length} players for ${TEAM_NAME}.`);
+  console.log(`Updated ${players.length} players across ${teams.length} teams in group ${GROUP_ID}.`);
 }
 
 try {

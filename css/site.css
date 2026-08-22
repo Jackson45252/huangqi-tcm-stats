@@ -162,6 +162,47 @@ footer {
   padding-block: 42px 56px;
 }
 
+.team-switcher {
+  display: grid;
+  grid-template-columns: auto minmax(260px, 420px) 1fr;
+  align-items: center;
+  gap: 22px;
+  margin-bottom: 36px;
+  padding: 20px 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--gold-500);
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgb(57 30 20 / 7%);
+}
+
+.team-switcher h2 {
+  margin: 2px 0 0;
+  font-size: 22px;
+  white-space: nowrap;
+}
+
+.team-switcher > p {
+  margin: 0;
+  color: var(--ink-600);
+  font-size: 13px;
+}
+
+.team-select-box select {
+  width: 100%;
+  padding: 12px 40px 12px 14px;
+  color: var(--ink-900);
+  background: var(--cream-50);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-weight: 800;
+}
+
+.team-select-box select:focus {
+  border-color: var(--wine-700);
+  outline: 3px solid rgb(132 40 39 / 14%);
+}
+
 .leader-section,
 .roster-section {
   margin-bottom: 46px;
@@ -524,6 +565,14 @@ footer a {
 }
 
 @media (max-width: 900px) {
+  .team-switcher {
+    grid-template-columns: auto 1fr;
+  }
+
+  .team-switcher > p {
+    grid-column: 1 / -1;
+  }
+
   .leader-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -571,6 +620,17 @@ footer a {
 
   .page-shell {
     padding-block: 28px 40px;
+  }
+
+  .team-switcher {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 28px;
+    padding: 18px;
+  }
+
+  .team-switcher > p {
+    grid-column: auto;
   }
 
   .leader-grid {

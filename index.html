@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="黃耆 TCM 球員數據、排行榜與投籃表現。">
+    <meta name="description" content="五甲 S6 各隊球員數據、排行榜與投籃表現。">
     <meta name="theme-color" content="#681d1d">
-    <meta property="og:title" content="黃耆 TCM｜球員數據">
-    <meta property="og:description" content="快速查看黃耆 TCM 球員數據與隊內排行榜。">
+    <meta property="og:title" content="五甲 S6｜球員數據">
+    <meta property="og:description" content="快速切換查看五甲 S6 各隊球員數據與隊內排行榜。">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://jackson45252.github.io/huangqi-tcm-stats/">
-    <title>黃耆 TCM｜球員數據</title>
+    <title>五甲 S6｜球員數據</title>
     <link rel="stylesheet" href="./css/site.css">
     <script src="./js/site.js" defer></script>
   </head>
@@ -17,12 +17,12 @@
     <header class="hero">
       <div class="hero__inner">
         <div class="brand-mark" aria-hidden="true">
-          <span>黃</span>
-          <small>TCM</small>
+          <span id="teamInitial">隊</span>
+          <small>S6</small>
         </div>
         <div class="hero__copy">
           <p class="eyebrow" id="seasonName">球隊數據中心</p>
-          <h1>黃耆 <span>TCM</span></h1>
+          <h1 id="teamName">球員數據</h1>
           <p class="hero__description">快速掌握球員表現與隊內排行</p>
         </div>
         <div class="hero__meta">
@@ -33,6 +33,20 @@
     </header>
 
     <main class="page-shell">
+      <section class="team-switcher" aria-labelledby="teamSwitcherTitle">
+        <div>
+          <p class="section-kicker">SELECT TEAM</p>
+          <h2 id="teamSwitcherTitle">選擇球隊</h2>
+        </div>
+        <label class="team-select-box">
+          <span class="visually-hidden">選擇要查看的球隊</span>
+          <select id="teamSelect" aria-label="選擇球隊" disabled>
+            <option>載入球隊中…</option>
+          </select>
+        </label>
+        <p>切換後可直接複製網址分享給隊友</p>
+      </section>
+
       <section class="leader-section" aria-labelledby="leaderTitle">
         <div class="section-heading">
           <div>
@@ -106,7 +120,7 @@
         <div class="table-panel" id="tablePanel" hidden>
           <div class="table-scroll">
             <table>
-              <caption class="visually-hidden">黃耆 TCM 球員平均數據</caption>
+              <caption id="tableCaption" class="visually-hidden">球員平均數據</caption>
               <thead>
                 <tr>
                   <th scope="col">球員</th>
