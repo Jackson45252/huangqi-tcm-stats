@@ -465,12 +465,24 @@ function applySelectionFromUrl({ updateUrl = false } = {}) {
     (event) => event.eventId === requested.eventId
   );
 
-  const playerContext = state.allPlayers.find((player) =>
-    (requested.teamId === null || Number(player.TeamId) === requested.teamId) &&
-    (requested.eventId === null || Number(player.EventId) === requested.eventId) &&
-    (requested.groupId === null || Number(player.GroupId) === requested.groupId)
-  );
+  const playerContext = requested.teamId === null
+    ? null
+    : state.allPlayers.find((player) =>
+        Number(player.TeamId) === requested.teamId &&
+        (requested.eventId === null || Number(player.EventId) === requested.eventId) &&
+        (requested.groupId === null || Number(player.GroupId) === requested.groupId)
+      );
 
+  const requestedGroupEvent = requested.groupId === null
+    ? null
+    : state.events.find((event) =>
+        event.groups.some((group) => group.groupId === requested.groupId)
+      );
+  const defaultTeamEvent = state.events.find((event) =>
+    event.groups.some((group) =>
+      group.teams.some((team) => team.teamId === DEFAULT_TEAM_ID)
+    )
+  );
   const defaultEventExists = state.events.some(
     (event) => event.eventId === DEFAULT_EVENT_ID
   );
@@ -478,14 +490,17 @@ function applySelectionFromUrl({ updateUrl = false } = {}) {
     ? requested.eventId
     : playerContext
       ? Number(playerContext.EventId)
-      : defaultEventExists
-        ? DEFAULT_EVENT_ID
-        : state.events[0]?.eventId;
+      : requestedGroupEvent
+        ? requestedGroupEvent.eventId
+        : defaultTeamEvent
+          ? defaultTeamEvent.eventId
+          : defaultEventExists
+            ? DEFAULT_EVENT_ID
+            : state.events[0]?.eventId;
 
   const preferredGroupId = requested.groupId ??
     (playerContext ? Number(playerContext.GroupId) : null);
-  const preferredTeamId = requested.teamId ??
-    (playerContext ? Number(playerContext.TeamId) : null);
+  const preferredTeamId = requested.teamId;
 
   return selectEvent(eventId, {
     preferredGroupId,
