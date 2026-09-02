@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="五甲 S6 各隊球員數據、排行榜與投籃表現。">
-    <meta name="theme-color" content="#681d1d">
-    <meta property="og:title" content="五甲 S6｜球員數據">
-    <meta property="og:description" content="快速切換查看五甲 S6 各隊球員數據與隊內排行榜。">
+    <meta name="description" content="南球人各季度、組別與球隊的球員數據、排行榜及投籃表現。">
+    <meta name="theme-color" content="#4a0b12">
+    <meta property="og:title" content="南球人｜球員數據中心">
+    <meta property="og:description" content="依季度、組別與球隊快速切換查看球員數據及隊內排行榜。">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://jackson45252.github.io/huangqi-tcm-stats/">
-    <title>五甲 S6｜球員數據</title>
+    <title>南球人｜球員數據中心</title>
     <link rel="stylesheet" href="./css/site.css">
     <script src="./js/site.js" defer></script>
   </head>
@@ -18,12 +18,12 @@
       <div class="hero__inner">
         <div class="brand-mark" aria-hidden="true">
           <span id="teamInitial">隊</span>
-          <small>S6</small>
+          <small id="groupMark">聯賽</small>
         </div>
         <div class="hero__copy">
-          <p class="eyebrow" id="seasonName">球隊數據中心</p>
+          <p class="eyebrow" id="seasonName">球員數據中心</p>
           <h1 id="teamName">球員數據</h1>
-          <p class="hero__description">快速掌握球員表現與隊內排行</p>
+          <p class="hero__description">依季度、組別快速掌握球員表現與隊內排行</p>
         </div>
         <div class="hero__meta">
           <span class="live-dot" aria-hidden="true"></span>
@@ -33,18 +33,37 @@
     </header>
 
     <main class="page-shell">
-      <section class="team-switcher" aria-labelledby="teamSwitcherTitle">
-        <div>
-          <p class="section-kicker">SELECT TEAM</p>
-          <h2 id="teamSwitcherTitle">選擇球隊</h2>
+      <section class="data-switcher" aria-labelledby="dataSwitcherTitle">
+        <div class="data-switcher__heading">
+          <div>
+            <p class="section-kicker">BROWSE STATS</p>
+            <h2 id="dataSwitcherTitle">選擇賽事資料</h2>
+          </div>
+          <p>選擇後網址會同步更新，可直接分享目前畫面</p>
         </div>
-        <label class="team-select-box">
-          <span class="visually-hidden">選擇要查看的球隊</span>
-          <select id="teamSelect" aria-label="選擇球隊" disabled>
-            <option>載入球隊中…</option>
-          </select>
-        </label>
-        <p>切換後可直接複製網址分享給隊友</p>
+
+        <div class="filter-grid">
+          <label class="filter-field">
+            <span>季度／賽季</span>
+            <select id="eventSelect" aria-label="選擇季度或賽季" disabled>
+              <option>載入季度中…</option>
+            </select>
+          </label>
+
+          <label class="filter-field">
+            <span>組別</span>
+            <select id="groupSelect" aria-label="選擇組別" disabled>
+              <option>請先選擇季度</option>
+            </select>
+          </label>
+
+          <label class="filter-field">
+            <span>球隊</span>
+            <select id="teamSelect" aria-label="選擇球隊" disabled>
+              <option>請先選擇組別</option>
+            </select>
+          </label>
+        </div>
       </section>
 
       <section class="leader-section" aria-labelledby="leaderTitle">
