@@ -1,12 +1,18 @@
 "use strict";
 
 const DATA_URL = "./data/players.json";
+const DEFAULT_EVENT_ID = 353;
+const DEFAULT_GROUP_ID = 715;
 const DEFAULT_TEAM_ID = 1789;
 
 const state = {
   allPlayers: [],
+  events: [],
+  groups: [],
   teams: [],
   players: [],
+  selectedEventId: null,
+  selectedGroupId: null,
   selectedTeamId: null,
   query: "",
   sortKey: "EffAvg"
@@ -15,7 +21,10 @@ const state = {
 const elements = {
   seasonName: document.querySelector("#seasonName"),
   teamInitial: document.querySelector("#teamInitial"),
+  groupMark: document.querySelector("#groupMark"),
   teamName: document.querySelector("#teamName"),
+  eventSelect: document.querySelector("#eventSelect"),
+  groupSelect: document.querySelector("#groupSelect"),
   teamSelect: document.querySelector("#teamSelect"),
   updatedAt: document.querySelector("#updatedAt"),
   playerCount: document.querySelector("#playerCount"),
@@ -47,7 +56,11 @@ function decimal(value) {
 }
 
 function percentage(value) {
-  return `${decimal(value)}%`;
+  return decimal(value) + "%";
+}
+
+function text(value) {
+  return value == null ? "" : String(value);
 }
 
 function formatUpdatedAt(value) {
@@ -56,14 +69,14 @@ function formatUpdatedAt(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "更新時間未知";
 
-  return `更新於 ${new Intl.DateTimeFormat("zh-TW", {
+  return "更新於 " + new Intl.DateTimeFormat("zh-TW", {
     timeZone: "Asia/Taipei",
     month: "numeric",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false
-  }).format(date)}`;
+  }).format(date);
 }
 
 function appendCell(row, value, className = "") {
@@ -79,7 +92,7 @@ function appendShotCell(row, made, attempted, percent) {
   const rate = document.createElement("span");
 
   shots.className = "shot-line";
-  shots.textContent = `${decimal(made)} / ${decimal(attempted)}`;
+  shots.textContent = decimal(made) + " / " + decimal(attempted);
   rate.className = "shot-percent";
   rate.textContent = percentage(percent);
 
@@ -101,7 +114,7 @@ function createStat(value, label) {
 
 function createShootingStat(label, value) {
   const item = document.createElement("span");
-  item.textContent = `${label} ${percentage(value)}`;
+  item.textContent = label + " " + percentage(value);
   return item;
 }
 
@@ -119,7 +132,7 @@ function createPlayerCard(player) {
   shooting.className = "player-card__shooting";
 
   name.textContent = player.PlayerName;
-  games.textContent = `${numeric(player.GameCount)} 場`;
+  games.textContent = numeric(player.GameCount) + " 場";
   head.append(name, games);
 
   stats.append(
@@ -142,18 +155,18 @@ function createPlayerCard(player) {
 function getVisiblePlayers() {
   const query = state.query.trim().toLocaleLowerCase("zh-Hant");
   const filtered = state.players.filter((player) =>
-    player.PlayerName.toLocaleLowerCase("zh-Hant").includes(query)
+    text(player.PlayerName).toLocaleLowerCase("zh-Hant").includes(query)
   );
 
   return filtered.sort((left, right) => {
     if (state.sortKey === "PlayerName") {
-      return left.PlayerName.localeCompare(right.PlayerName, "zh-Hant");
+      return text(left.PlayerName).localeCompare(text(right.PlayerName), "zh-Hant");
     }
 
     return (
       numeric(right[state.sortKey]) - numeric(left[state.sortKey]) ||
       numeric(right.GameCount) - numeric(left.GameCount) ||
-      left.PlayerName.localeCompare(right.PlayerName, "zh-Hant")
+      text(left.PlayerName).localeCompare(text(right.PlayerName), "zh-Hant")
     );
   });
 }
@@ -198,10 +211,10 @@ function renderLeaders() {
   const activePlayers = state.players.filter((player) => numeric(player.GameCount) > 0);
 
   if (activePlayers.length === 0) {
-    elements.leaderNote.textContent = "賽季尚未產生比賽數據";
+    elements.leaderNote.textContent = "本組尚未產生比賽數據";
     leaderFields.forEach(({ nameId, valueId }) => {
-      document.querySelector(`#${nameId}`).textContent = "尚無數據";
-      document.querySelector(`#${valueId}`).textContent = "—";
+      document.querySelector("#" + nameId).textContent = "尚無數據";
+      document.querySelector("#" + valueId).textContent = "—";
     });
     return;
   }
@@ -213,117 +226,313 @@ function renderLeaders() {
       (left, right) => numeric(right[key]) - numeric(left[key])
     )[0];
 
-    document.querySelector(`#${nameId}`).textContent = leader.PlayerName;
-    document.querySelector(`#${valueId}`).textContent = decimal(leader[key]);
+    document.querySelector("#" + nameId).textContent = leader.PlayerName;
+    document.querySelector("#" + valueId).textContent = decimal(leader[key]);
   });
 }
 
-function buildTeamList(players) {
-  const teams = new Map();
+function buildEventList(players) {
+  const eventMap = new Map();
 
   players.forEach((player) => {
+    const eventId = Number(player.EventId);
+    const groupId = Number(player.GroupId);
     const teamId = Number(player.TeamId);
-    if (!Number.isFinite(teamId) || teams.has(teamId)) return;
 
-    teams.set(teamId, {
-      teamId,
-      teamName: player.TeamName || `球隊 ${teamId}`
-    });
+    if (!Number.isInteger(eventId) || !Number.isInteger(groupId) || !Number.isInteger(teamId)) {
+      return;
+    }
+
+    if (!eventMap.has(eventId)) {
+      eventMap.set(eventId, {
+        eventId,
+        eventName: player.EventName || "賽季 " + eventId,
+        groups: new Map()
+      });
+    }
+
+    const event = eventMap.get(eventId);
+
+    if (!event.groups.has(groupId)) {
+      event.groups.set(groupId, {
+        groupId,
+        groupName: player.GroupName || "組別 " + groupId,
+        teams: new Map()
+      });
+    }
+
+    const group = event.groups.get(groupId);
+
+    if (!group.teams.has(teamId)) {
+      group.teams.set(teamId, {
+        teamId,
+        teamName: player.TeamName || "球隊 " + teamId
+      });
+    }
   });
 
-  return [...teams.values()].sort((left, right) =>
-    left.teamName.localeCompare(right.teamName, "zh-Hant")
-  );
+  return [...eventMap.values()]
+    .map((event) => ({
+      eventId: event.eventId,
+      eventName: event.eventName,
+      groups: [...event.groups.values()]
+        .map((group) => ({
+          groupId: group.groupId,
+          groupName: group.groupName,
+          teams: [...group.teams.values()].sort((left, right) =>
+            left.teamName.localeCompare(right.teamName, "zh-Hant")
+          )
+        }))
+        .sort((left, right) =>
+          left.groupName.localeCompare(right.groupName, "zh-Hant")
+        )
+    }))
+    .sort((left, right) => right.eventId - left.eventId);
 }
 
-function populateTeamSelect() {
-  const options = state.teams.map((team) => {
+function normalizeEvents(payload) {
+  if (!Array.isArray(payload.events) || payload.events.length === 0) {
+    return buildEventList(payload.players);
+  }
+
+  return payload.events
+    .map((event) => ({
+      eventId: Number(event.eventId),
+      eventName: event.eventName,
+      groups: Array.isArray(event.groups)
+        ? event.groups.map((group) => ({
+            groupId: Number(group.groupId),
+            groupName: group.groupName,
+            teams: Array.isArray(group.teams)
+              ? group.teams.map((team) => ({
+                  teamId: Number(team.teamId),
+                  teamName: team.teamName
+                }))
+              : []
+          }))
+        : []
+    }))
+    .filter((event) => Number.isInteger(event.eventId) && event.groups.length > 0)
+    .sort((left, right) => right.eventId - left.eventId);
+}
+
+function populateSelect(select, items, getValue, getLabel) {
+  const options = items.map((item) => {
     const option = document.createElement("option");
-    option.value = String(team.teamId);
-    option.textContent = team.teamName;
+    option.value = String(getValue(item));
+    option.textContent = getLabel(item);
     return option;
   });
 
-  elements.teamSelect.replaceChildren(...options);
-  elements.teamSelect.disabled = false;
+  select.replaceChildren(...options);
+  select.disabled = options.length === 0;
 }
 
-function getRequestedTeamId() {
-  const parameters = new URLSearchParams(window.location.search);
-  const value = parameters.get("teamId") ?? parameters.get("TeamId");
+function getParameterNumber(parameters, camelName, pascalName) {
+  const value = parameters.get(camelName) ?? parameters.get(pascalName);
   if (value === null || value.trim() === "") return null;
 
-  const teamId = Number(value);
-  return Number.isInteger(teamId) ? teamId : null;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) ? parsed : null;
 }
 
-function updateTeamUrl(teamId) {
+function getRequestedSelection() {
+  const parameters = new URLSearchParams(window.location.search);
+
+  return {
+    eventId: getParameterNumber(parameters, "eventId", "EventId"),
+    groupId: getParameterNumber(parameters, "groupId", "GroupId"),
+    teamId: getParameterNumber(parameters, "teamId", "TeamId")
+  };
+}
+
+function updateSelectionUrl() {
   const url = new URL(window.location.href);
-  url.searchParams.delete("TeamId");
-  url.searchParams.set("teamId", String(teamId));
+
+  ["EventId", "GroupId", "TeamId"].forEach((name) => url.searchParams.delete(name));
+  url.searchParams.set("eventId", String(state.selectedEventId));
+  url.searchParams.set("groupId", String(state.selectedGroupId));
+  url.searchParams.set("teamId", String(state.selectedTeamId));
   window.history.replaceState({}, "", url);
 }
 
+function getGroupMark(groupName) {
+  const match = text(groupName).match(/S\s*(\d+)/i);
+  if (match) return "S" + match[1];
+  if (text(groupName).includes("女子")) return "女子";
+  return "組別";
+}
+
 function selectTeam(teamId, { updateUrl = false } = {}) {
+  const event = state.events.find((item) => item.eventId === state.selectedEventId);
+  const group = state.groups.find((item) => item.groupId === state.selectedGroupId);
   const team = state.teams.find((item) => item.teamId === Number(teamId));
-  if (!team) return false;
+
+  if (!event || !group || !team) return false;
 
   state.selectedTeamId = team.teamId;
-  state.players = state.allPlayers.filter(
-    (player) => Number(player.TeamId) === team.teamId
+  state.players = state.allPlayers.filter((player) =>
+    Number(player.EventId) === state.selectedEventId &&
+    Number(player.GroupId) === state.selectedGroupId &&
+    Number(player.TeamId) === team.teamId
   );
   state.query = "";
 
   elements.teamSelect.value = String(team.teamId);
   elements.playerSearch.value = "";
+  elements.seasonName.textContent = event.eventName;
   elements.teamName.textContent = team.teamName;
   elements.teamInitial.textContent = team.teamName.trim().charAt(0) || "隊";
-  elements.tableCaption.textContent = `${team.teamName} 球員平均數據`;
-  document.title = `${team.teamName}｜球員數據`;
+  elements.groupMark.textContent = getGroupMark(group.groupName);
+  elements.tableCaption.textContent =
+    event.eventName + "／" + group.groupName + "／" + team.teamName + " 球員平均數據";
+  document.title = team.teamName + "｜" + group.groupName + "｜球員數據";
 
-  if (updateUrl) updateTeamUrl(team.teamId);
+  if (updateUrl) updateSelectionUrl();
 
   renderLeaders();
   renderRoster();
   return true;
 }
 
+function selectGroup(groupId, { preferredTeamId = null, updateUrl = false } = {}) {
+  const group = state.groups.find((item) => item.groupId === Number(groupId));
+  if (!group) return false;
+
+  state.selectedGroupId = group.groupId;
+  state.teams = group.teams;
+  elements.groupSelect.value = String(group.groupId);
+
+  populateSelect(
+    elements.teamSelect,
+    state.teams,
+    (team) => team.teamId,
+    (team) => team.teamName
+  );
+
+  const requestedTeamExists = state.teams.some(
+    (team) => team.teamId === Number(preferredTeamId)
+  );
+  const defaultTeamExists = state.teams.some((team) => team.teamId === DEFAULT_TEAM_ID);
+  const teamId = requestedTeamExists
+    ? Number(preferredTeamId)
+    : defaultTeamExists
+      ? DEFAULT_TEAM_ID
+      : state.teams[0]?.teamId;
+
+  return selectTeam(teamId, { updateUrl });
+}
+
+function selectEvent(
+  eventId,
+  { preferredGroupId = null, preferredTeamId = null, updateUrl = false } = {}
+) {
+  const event = state.events.find((item) => item.eventId === Number(eventId));
+  if (!event) return false;
+
+  state.selectedEventId = event.eventId;
+  state.groups = event.groups;
+  elements.eventSelect.value = String(event.eventId);
+
+  populateSelect(
+    elements.groupSelect,
+    state.groups,
+    (group) => group.groupId,
+    (group) => group.groupName
+  );
+
+  const requestedGroupExists = state.groups.some(
+    (group) => group.groupId === Number(preferredGroupId)
+  );
+  const teamGroup = state.groups.find((group) =>
+    group.teams.some((team) => team.teamId === Number(preferredTeamId))
+  );
+  const defaultGroupExists = state.groups.some((group) => group.groupId === DEFAULT_GROUP_ID);
+  const groupId = requestedGroupExists
+    ? Number(preferredGroupId)
+    : teamGroup
+      ? teamGroup.groupId
+      : defaultGroupExists
+        ? DEFAULT_GROUP_ID
+        : state.groups[0]?.groupId;
+
+  return selectGroup(groupId, { preferredTeamId, updateUrl });
+}
+
+function applySelectionFromUrl({ updateUrl = false } = {}) {
+  const requested = getRequestedSelection();
+  const requestedEventExists = state.events.some(
+    (event) => event.eventId === requested.eventId
+  );
+
+  const playerContext = requested.teamId === null
+    ? null
+    : state.allPlayers.find((player) =>
+        Number(player.TeamId) === requested.teamId &&
+        (requested.eventId === null || Number(player.EventId) === requested.eventId) &&
+        (requested.groupId === null || Number(player.GroupId) === requested.groupId)
+      );
+
+  const requestedGroupEvent = requested.groupId === null
+    ? null
+    : state.events.find((event) =>
+        event.groups.some((group) => group.groupId === requested.groupId)
+      );
+  const defaultTeamEvent = state.events.find((event) =>
+    event.groups.some((group) =>
+      group.teams.some((team) => team.teamId === DEFAULT_TEAM_ID)
+    )
+  );
+  const defaultEventExists = state.events.some(
+    (event) => event.eventId === DEFAULT_EVENT_ID
+  );
+  const eventId = requestedEventExists
+    ? requested.eventId
+    : playerContext
+      ? Number(playerContext.EventId)
+      : requestedGroupEvent
+        ? requestedGroupEvent.eventId
+        : defaultTeamEvent
+          ? defaultTeamEvent.eventId
+          : defaultEventExists
+            ? DEFAULT_EVENT_ID
+            : state.events[0]?.eventId;
+
+  const preferredGroupId = requested.groupId ??
+    (playerContext ? Number(playerContext.GroupId) : null);
+  const preferredTeamId = requested.teamId;
+
+  return selectEvent(eventId, {
+    preferredGroupId,
+    preferredTeamId,
+    updateUrl
+  });
+}
+
 async function loadData() {
   try {
-    const response = await fetch(`${DATA_URL}?v=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const response = await fetch(DATA_URL + "?v=" + Date.now(), { cache: "no-store" });
+    if (!response.ok) throw new Error("HTTP " + response.status);
 
     const payload = await response.json();
     if (!Array.isArray(payload.players)) throw new Error("資料格式不正確");
 
     state.allPlayers = payload.players;
-    state.teams = Array.isArray(payload.teams) && payload.teams.length > 0
-      ? payload.teams.map((team) => ({
-          teamId: Number(team.teamId),
-          teamName: team.teamName
-        }))
-      : buildTeamList(payload.players);
+    state.events = normalizeEvents(payload);
 
-    if (state.teams.length === 0) throw new Error("找不到球隊資料");
+    if (state.events.length === 0) throw new Error("找不到季度或組別資料");
 
-    elements.seasonName.textContent = payload.groupName || payload.eventName || "球隊數據中心";
     elements.updatedAt.textContent = formatUpdatedAt(payload.updatedAt);
     elements.statusMessage.hidden = true;
 
-    populateTeamSelect();
-
-    const requestedTeamId = getRequestedTeamId();
-    const requestedTeamExists = state.teams.some(
-      (team) => team.teamId === requestedTeamId
+    populateSelect(
+      elements.eventSelect,
+      state.events,
+      (event) => event.eventId,
+      (event) => event.eventName
     );
-    const fallbackTeamId = state.teams.some((team) => team.teamId === DEFAULT_TEAM_ID)
-      ? DEFAULT_TEAM_ID
-      : state.teams[0].teamId;
-    const initialTeamId = requestedTeamExists ? requestedTeamId : fallbackTeamId;
 
-    selectTeam(initialTeamId, {
-      updateUrl: requestedTeamId !== null && !requestedTeamExists
-    });
+    applySelectionFromUrl({ updateUrl: true });
   } catch (error) {
     console.error(error);
     elements.updatedAt.textContent = "資料讀取失敗";
@@ -342,13 +551,20 @@ elements.sortSelect.addEventListener("change", (event) => {
   renderRoster();
 });
 
+elements.eventSelect.addEventListener("change", (event) => {
+  selectEvent(Number(event.target.value), { updateUrl: true });
+});
+
+elements.groupSelect.addEventListener("change", (event) => {
+  selectGroup(Number(event.target.value), { updateUrl: true });
+});
+
 elements.teamSelect.addEventListener("change", (event) => {
   selectTeam(Number(event.target.value), { updateUrl: true });
 });
 
 window.addEventListener("popstate", () => {
-  const requestedTeamId = getRequestedTeamId();
-  if (requestedTeamId !== null) selectTeam(requestedTeamId);
+  if (state.events.length > 0) applySelectionFromUrl();
 });
 
 loadData();
