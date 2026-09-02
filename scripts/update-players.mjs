@@ -55,7 +55,7 @@ function buildCatalog(players) {
     if (!eventMap.has(eventId)) {
       eventMap.set(eventId, {
         eventId,
-        eventName: player.EventName || \`賽季 \${eventId}\`,
+        eventName: player.EventName || "賽季 " + eventId,
         playerCount: 0,
         groups: new Map()
       });
@@ -67,7 +67,7 @@ function buildCatalog(players) {
     if (!event.groups.has(groupId)) {
       event.groups.set(groupId, {
         groupId,
-        groupName: player.GroupName || \`組別 \${groupId}\`,
+        groupName: player.GroupName || "組別 " + groupId,
         playerCount: 0,
         teams: new Map()
       });
@@ -79,7 +79,7 @@ function buildCatalog(players) {
     if (!group.teams.has(teamId)) {
       group.teams.set(teamId, {
         teamId,
-        teamName: player.TeamName || \`球隊 \${teamId}\`,
+        teamName: player.TeamName || "球隊 " + teamId,
         playerCount: 0
       });
     }
@@ -127,7 +127,7 @@ async function updatePlayers() {
   });
 
   if (!response.ok) {
-    throw new Error(\`BBallHot API returned HTTP \${response.status}\`);
+    throw new Error("BBallHot API returned HTTP " + response.status);
   }
 
   const allPlayers = await response.json();
@@ -168,9 +168,10 @@ async function updatePlayers() {
   };
 
   await mkdir(path.dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, \`\${JSON.stringify(payload, null, 2)}\\n\`, "utf8");
+  await writeFile(outputPath, JSON.stringify(payload, null, 2) + "\n", "utf8");
   console.log(
-    \`Updated \${players.length} players across \${events.length} events, \${groupCount} groups and \${teamCount} teams.\`
+    "Updated " + players.length + " players across " + events.length +
+    " events, " + groupCount + " groups and " + teamCount + " teams."
   );
 }
 
@@ -178,7 +179,7 @@ try {
   await updatePlayers();
 } catch (error) {
   if (await hasUsableFallback()) {
-    console.warn(\`Update failed; deploying cached data instead: \${error.message}\`);
+    console.warn("Update failed; deploying cached data instead: " + error.message);
   } else {
     throw error;
   }
